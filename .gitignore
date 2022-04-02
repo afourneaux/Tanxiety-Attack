@@ -1,7 +1,4 @@
 # ignore everything
 /*
-# allow Assets and ProjectSettings
-![Aa]ssets/
-![Pp]roject[Ss]ettings/
-![Pp]ackages/
-!.gitignore
+# except the main project folder
+!476-A3
