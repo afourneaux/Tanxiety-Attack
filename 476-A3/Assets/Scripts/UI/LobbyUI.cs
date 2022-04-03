@@ -3,43 +3,62 @@ using System.Collections.Generic;
 using Photon.Realtime;
 using Photon.Pun;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class LobbyUI : MonoBehaviour
 {
     GameObject PlayerListGO;
+    GameObject PlayerManagerGO;
+    GameObject ColourPreviewGO;
     public GameObject PlayerLinePrefab;
-    bool isSetup = false;
-    bool isReady = false;
     int playerCount = 0;
+    Color colour = Color.HSVToRGB(1f, 1f, 1f);
+
+    void Start() {
+        PlayerManagerGO = transform.Find("/Players").gameObject;
+        ColourPreviewGO = transform.Find("RightSide/ColourDisplay").gameObject;
+        PlayerListGO = transform.Find("LeftSide/PlayerList").gameObject;
+        
+        ColourPreviewGO.GetComponent<Image>().color = colour;
+    }
 
     void Update() {
-        if (!isSetup) {
-            if (NetworkController.instance.IsConnected()) {
-                
-                PlayerListGO = transform.Find("PlayerList").gameObject;
 
-                isSetup = true;
-            }
-        }
-
-        if (isSetup) {
-            int newPlayerCount = NetworkController.instance.GetPlayerCount();
-            if (newPlayerCount != playerCount) {
-                playerCount = newPlayerCount;
+        if (NetworkController.instance.IsConnected()) {
+            if (PlayerManager.isDirty) {
+                Debug.Log("UpdateUI");
                 foreach (Transform child in PlayerListGO.transform) {
                     Destroy(child.gameObject);
                 }
 
-                foreach (Player player in NetworkController.instance.GetPlayerList()) {
+                bool startGame = true;
+
+                foreach (PlayerManager pm in PlayerManager.AllPlayers) {
                     GameObject lobbyLineGO = Instantiate(PlayerLinePrefab, Vector3.zero, Quaternion.identity, PlayerListGO.transform);
-                    lobbyLineGO.transform.Find("PlayerName").GetComponent<TMPro.TMP_Text>().text = player.NickName;
-                    lobbyLineGO.transform.Find("ReadyStatus").GetComponent<TMPro.TMP_Text>().text = "Not Ready";
+                    lobbyLineGO.transform.Find("PlayerName").GetComponent<TMPro.TMP_Text>().text = pm.player.NickName;
+                    lobbyLineGO.transform.Find("ReadyStatus").GetComponent<TMPro.TMP_Text>().text = pm.isReady ? "Ready!" : "Not Ready";
+                    lobbyLineGO.transform.Find("ColourDisplay").GetComponent<Image>().color = pm.colour;
+                    if (pm.isReady == false) {
+                        startGame = false;
+                    }
+                }
+                PlayerManager.isDirty = false;
+
+                if (PlayerManager.AllPlayers.Count > 0 && startGame) {
+                    MainController.instance.StartGame();
+                    Destroy(gameObject);
                 }
             }
         }
     }
 
+    public void UpdateColour(Color newColour) {
+        colour = newColour;
+        PlayerManager.instance.colour = newColour;
+        ColourPreviewGO.GetComponent<Image>().color = newColour;
+    }
+
     public void Ready() {
-        
+        PlayerManager.instance.isReady = true;
     }
 }

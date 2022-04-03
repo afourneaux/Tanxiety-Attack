@@ -76,13 +76,17 @@ public class NetworkController : MonoBehaviourPunCallbacks
     public GameObject SpawnNetworkedObject(string prefabName, Vector3 position, Quaternion rotation, GameObject parent = null) {
         GameObject go = PhotonNetwork.Instantiate(prefabName, position, rotation);
         if (parent != null) {
-            go.transform.parent = parent.transform;
+            RpcSetParent(go.GetComponent<PhotonView>().ViewID, parent);
         }
         return go;
     }
 
+    public void DestroyNetworkedObject(GameObject go) {
+        PhotonNetwork.Destroy(go);
+    }
+
     public bool IsConnected() {
-        return PhotonNetwork.IsConnected;
+        return PhotonNetwork.InRoom;
     }
 
     public string GetPlayerName() {
@@ -93,11 +97,75 @@ public class NetworkController : MonoBehaviourPunCallbacks
         return PhotonNetwork.IsMasterClient;
     }
 
-    public Player[] GetPlayerList() {
-        return PhotonNetwork.PlayerList;
+    public Dictionary<int, Player> GetPlayerList() {
+        return PhotonNetwork.CurrentRoom.Players;
+    }
+
+    public bool CheckIsMine(GameObject go) {
+        PhotonView pv = go.GetComponentInParent<PhotonView>();
+        if (pv == null) {
+            return false;
+        }
+        return pv.IsMine;
+    }
+
+    public string GetOwner(GameObject go) {
+        PhotonView pv = go.GetComponentInParent<PhotonView>();
+        if (pv == null) {
+            return null;
+        }
+        return pv.Owner.UserId;
     }
 
     public int GetPlayerCount() {
-        return PhotonNetwork.PlayerList.Length;
+        return PhotonNetwork.CurrentRoom.PlayerCount;
+    }
+
+    public void AssignTank(GameObject tank, PlayerManager player) {
+        int tankID = tank.GetComponent<PhotonView>().ViewID;
+        int playerID = player.GetComponent<PhotonView>().ViewID;
+        photonView.RPC("RpcAssignTank", RpcTarget.All, tankID, playerID);
+    }
+
+    public void DestroyTerrain(DestructibleTerrain terrain, Vector3 source) {
+        bool fallBackwards = Vector3.Dot(terrain.transform.position - source, terrain.transform.forward) < 0;
+        int terrainID = terrain.gameObject.GetComponent<PhotonView>().ViewID;
+        photonView.RPC("RpcDestroyTerrain", RpcTarget.All, terrainID, fallBackwards);
+    }
+    
+    public void DestroyOtherPlayersObject(int viewID) {
+        photonView.RPC("RpcDestroyOtherPlayersObject", PhotonView.Find(viewID).Owner, viewID);
+    }
+
+    [PunRPC]
+    public void RpcSetParent(int viewID, GameObject parent) {
+        PhotonView child = PhotonNetwork.GetPhotonView(viewID);
+        child.transform.parent = parent.transform;
+    }
+
+    [PunRPC]
+    public void RpcAssignTank(params object[] parameters) {
+        int tankID = (int)parameters[0];
+        int playerID = (int)parameters[1];
+        Tank tank = PhotonNetwork.GetPhotonView(tankID).GetComponent<Tank>();
+        PlayerManager player = PhotonNetwork.GetPhotonView(playerID).GetComponent<PlayerManager>();
+        player.tank = tank;
+        Debug.Log("Tank " + tankID.ToString() + " set for player " + playerID.ToString());
+    }
+
+    [PunRPC]
+    public void RpcDestroyTerrain(params object[] parameters) {
+        int terrainID = (int)parameters[0];
+        bool fallBackwards = (bool)parameters[1];
+        DestructibleTerrain terrain = PhotonNetwork.GetPhotonView(terrainID).GetComponent<DestructibleTerrain>();
+        terrain.OnHit(fallBackwards);
+    }
+
+    [PunRPC]
+    public void RpcDestroyOtherPlayersObject(int viewID) {
+        PhotonView pv = PhotonView.Find(viewID);
+        if (pv.IsMine) {
+            DestroyNetworkedObject(pv.gameObject);
+        }
     }
 }
