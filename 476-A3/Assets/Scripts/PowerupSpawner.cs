@@ -16,6 +16,8 @@ public class PowerupSpawner : MonoBehaviour
         baseLocation = transform.position;
     }
 
+    // Spawner sits as a parent to a powerup and manages its oscillation as well as re-enabling it
+    // after it has been collected
     void Update() {
         positionInOrbit += Time.deltaTime * SPEED;
         transform.position = baseLocation + Vector3.up * Mathf.Sin(positionInOrbit) * ORBIT_RADIUS;

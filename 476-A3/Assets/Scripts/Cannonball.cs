@@ -23,7 +23,7 @@ public class Cannonball : MonoBehaviour
         if (NetworkController.instance.CheckIsMine(gameObject) == false) {
             return;
         }
-
+        
         downwardForce += GRAVITY * Time.deltaTime;
         transform.Translate((Vector3.forward * force * Time.deltaTime) + (Vector3.down * downwardForce * Time.deltaTime));
     }

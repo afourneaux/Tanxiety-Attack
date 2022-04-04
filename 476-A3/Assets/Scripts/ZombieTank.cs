@@ -38,11 +38,13 @@ public class ZombieTank : MonoBehaviour
         cooldown -= Time.deltaTime;
         float slowdown = 1f;
 
+        // When approaching the end of a path, slow down
         float distanceToEnd = orbitRadius - direction * positionInOrbit;
         if (distanceToEnd <= SLOWDOWN_RANGE) {
             slowdown = (distanceToEnd / SLOWDOWN_RANGE * SLOWDOWN_STRENGTH) + (1f - SLOWDOWN_STRENGTH);
         }
 
+        // Switch direction when the end of a path is reached
         if (direction < 0 && positionInOrbit <= -orbitRadius) {
             direction = 1f;
         }
@@ -50,18 +52,21 @@ public class ZombieTank : MonoBehaviour
             direction = -1f;
         }
 
+        // Oscillate back and forth along a line
         float movement = direction * slowdown * SPEED * Time.deltaTime;
 
         positionInOrbit += movement;
 
         transform.Translate(movement * Vector3.forward);
 
+        // Spin the wheels
         wheelFR.transform.Rotate(Vector3.right * movement * WHEEL_ROTATE_SPEED);
         wheelFL.transform.Rotate(Vector3.right * movement * WHEEL_ROTATE_SPEED);
         wheelBR.transform.Rotate(Vector3.right * movement * WHEEL_ROTATE_SPEED);
         wheelBL.transform.Rotate(Vector3.right * movement * WHEEL_ROTATE_SPEED);
     }
 
+    // When the zombie spots a player, point the turret towards them and fire on cooldown
     public void OnSpot(Vector3 position) {
         turret.transform.LookAt(position, Vector3.up);
         if (NetworkController.instance.IsMaster() && cooldown <= 0) {

@@ -85,16 +85,6 @@ public class MainController : MonoBehaviour
                 }
             }
         }
-        /* 
-        // Display waypoints 
-        for (int i = 0; i < arrLength; i++) {
-            for (int j = 0; j < arrLength; j++) {
-                if (nodesArray[i][j] != null) {
-                    foreach (Vector2 target in nodesArray[i][j].Edges.Keys)
-                    Debug.DrawLine(To3D(nodesArray[i][j].Location), To3D(target), Color.blue, 100.0f);
-                }
-            }
-        }*/
     }
 
     void Update() {
@@ -109,10 +99,9 @@ public class MainController : MonoBehaviour
         return new Vector3(twoD.x, y, twoD.y);
     }
 
+    // Spawn a new tank at a random location
     public void SpawnTank() {
-
         Node startPoint = null;
-        // Terrible design, might fix later
         do {
             int index1 = Random.Range(0, nodesArray.Length);
             int index2 = Random.Range(0, nodesArray[index1].Length);

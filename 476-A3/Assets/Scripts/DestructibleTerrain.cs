@@ -11,6 +11,7 @@ public class DestructibleTerrain : MonoBehaviour
     float angle = 0f;
     float fallDirection = 1f;
 
+    // Disable collisions and start the process of the terrain falling over and eventually being destroyed
     public void OnHit(bool fallBackwards) {
         isHit = true;
 

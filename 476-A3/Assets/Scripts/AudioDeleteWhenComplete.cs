@@ -10,6 +10,7 @@ public class AudioDeleteWhenComplete : MonoBehaviour
 
     void Update()
     {
+        // Delete this object when its attached audio source completes
         if (audioSource.loop == false && audioSource.isPlaying == false) {
             Destroy(gameObject);
         }

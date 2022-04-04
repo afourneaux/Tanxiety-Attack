@@ -32,9 +32,11 @@ public class Tank : MonoBehaviourPunCallbacks, IPunObservable
     public float invincibilityPowerupCountdown = 0f;
     public float speedPowerupCountdown = 0f;
 
+    // IDs of audio stored so they can be stopped when no longer needed
     string engineAudio;
     string swivelAudio;
 
+    // References to different parts of the tank body, to be maneuvered independently
     GameObject body;
     GameObject turret;
     GameObject rotatePoint;
@@ -64,12 +66,14 @@ public class Tank : MonoBehaviourPunCallbacks, IPunObservable
 
     void Start() {
         if (photonView.IsMine) {
+            // Tell the camera to follow my tank
             turret.AddComponent<CameraFollow>();
         }
     }
 
     void Update()
     {
+        // Count down on powerups on all tanks
         if (speedPowerupCountdown >= 0) {
             speedPowerupCountdown -= Time.deltaTime;
         }
@@ -80,10 +84,12 @@ public class Tank : MonoBehaviourPunCallbacks, IPunObservable
             invincibilityPowerupCountdown -= Time.deltaTime;
         }
 
+        // Only proceed for the owned tank
         if (photonView.IsMine == false) {
             return;
         }
 
+        // Fire if SPACE is pressed and off cooldown
         if (cooldown <= 0f) {
             if (Input.GetKey(KeyCode.Space)) {
                 cannonCharge = Mathf.Min(cannonCharge + CHARGE_SPEED * Time.deltaTime, MAX_CHARGE);
@@ -100,6 +106,7 @@ public class Tank : MonoBehaviourPunCallbacks, IPunObservable
                 }
             }
         } else {
+            // Reduce cooldown timer or reset it if in posession of the reload powerup
             if (reloadPowerupCountdown > 0f) {
                 cooldown = 0f;
             } else {
@@ -107,19 +114,22 @@ public class Tank : MonoBehaviourPunCallbacks, IPunObservable
             }
 
             if (cooldown <= 0f) {
-                AudioController.instance.PlaySound(5);
+                AudioController.instance.PlaySound(5);  // Reload sound effect
             }
         }
     }
 
+    // Movement controls
     void FixedUpdate() {
         float horizontal = Input.GetAxis("Horizontal");
         float vertical = Input.GetAxis("Vertical");
         float rise = Input.GetAxis("TurretRise");
         float swivel = Input.GetAxis("TurretSwivel");
 
+        // Play audio quieter for other players' tanks
         float soundModifier = photonView.IsMine ? 1f : SOUND_REDUCTION;
 
+        // Play the engine sound effect when moving forward or backward
         if (Mathf.Abs(vertical) >= SOUND_DEADZONE) {
             if (engineAudio == null) {
                 engineAudio = AudioController.instance.PlaySound(1, true, soundModifier);
@@ -131,6 +141,7 @@ public class Tank : MonoBehaviourPunCallbacks, IPunObservable
             }
         }
 
+        // Play the swivel sound effect when rotating the turret
         if (Mathf.Abs(swivel) >= SOUND_DEADZONE) {
             if (swivelAudio == null) {
                 swivelAudio = AudioController.instance.PlaySound(6, true, soundModifier);
@@ -142,10 +153,12 @@ public class Tank : MonoBehaviourPunCallbacks, IPunObservable
             }
         }
 
+        // Only proceed for the owned tank
         if (photonView.IsMine == false) {
             return;
         }
 
+        // Calculate speeds based on inputs
         turretSwivel += swivel * TURRET_SWIVEL_SPEED * Time.fixedDeltaTime;
         turretRise += rise * TURRET_RISE_SPEED * Time.fixedDeltaTime;
         float forward = vertical * MOVE_SPEED * Time.fixedDeltaTime;
@@ -156,17 +169,21 @@ public class Tank : MonoBehaviourPunCallbacks, IPunObservable
         float wheelRotate = vertical * WHEEL_SPIN_SPEED * Time.fixedDeltaTime;
         float wheelRotateRotateModifier = horizontal * WHEEL_SPIN_SPEED / 2 * Time.fixedDeltaTime;
 
+        // Rotate the turret
         turretSwivel %= 360;
         rotate %= 360;
         wheelRotate %= 360;
         turretRise = Mathf.Clamp(turretRise, TURRET_MIN_RISE, TURRET_MAX_RISE);
-
         turret.transform.rotation = Quaternion.AngleAxis(turretSwivel, Vector3.up);
         rotatePoint.transform.rotation = Quaternion.AngleAxis(turretRise, turret.transform.right);
+
+        // Spin the wheels as the tank body rotates
         wheelFL.transform.rotation *= Quaternion.AngleAxis(wheelRotate + wheelRotateRotateModifier, Vector3.right);
         wheelFR.transform.rotation *= Quaternion.AngleAxis(wheelRotate - wheelRotateRotateModifier, Vector3.right);
         wheelBL.transform.rotation *= Quaternion.AngleAxis(wheelRotate + wheelRotateRotateModifier, Vector3.right);
         wheelBR.transform.rotation *= Quaternion.AngleAxis(wheelRotate - wheelRotateRotateModifier, Vector3.right);
+
+        // Apply movement to the tank as a whole
         rb.AddForce(forward * transform.forward);
         rb.AddTorque(rotate * Vector3.up);
     }
@@ -185,16 +202,21 @@ public class Tank : MonoBehaviourPunCallbacks, IPunObservable
         if (invincibilityPowerupCountdown > 0f) {
             return;
         }
+
+        // This tank is to be destroyed - Start the timer to spawn a new one
         NetworkController.instance.RespawnTank(photonView.Owner);
         
+        // Destroy the tank from the other player's client
         NetworkController.instance.DestroyOtherPlayersObject(photonView.ViewID);
     }
 
+    // When the tank is destroyed, cancel all tracked sounds
     public void OnDestroy() {
         AudioController.instance.StopByID(engineAudio);
         AudioController.instance.StopByID(swivelAudio);
     }
 
+    // Apply powerups
     public void Powerup(POWERUP type) {
         switch(type) {
             case POWERUP.RELOAD:

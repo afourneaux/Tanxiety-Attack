@@ -19,6 +19,7 @@ public class CameraFollow : MonoBehaviour
         mainCamera = Camera.main;
     }
     
+    // Set the camera to follow behind this object. If an object is blocking the camera's view of its target, push the camera closer to the target
     void Update() {
         if (cameraDistance > desiredDistance) {
             cameraDistance = Mathf.Max(desiredDistance, cameraDistance - CAMERA_SPEED * Time.fixedTime);

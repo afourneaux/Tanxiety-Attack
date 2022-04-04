@@ -14,6 +14,7 @@ public class ZombieTankAwarenessCollider : MonoBehaviour
         OnTriggerStay(collision.collider);
     }
 
+    // Detects player tanks within the zombie's awareness radius
     void OnTriggerStay(Collider collider) {
         if (collider.gameObject.layer == 6) {
             if (collider.GetComponentInParent<Tank>() != null) {

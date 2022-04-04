@@ -27,6 +27,7 @@ public class LobbyUI : MonoBehaviour
     void Update() {
 
         if (NetworkController.instance.IsConnected()) {
+            // Update the lobby with the player list to show username of all connected players, ready status, and selected colour
             if (PlayerManager.isDirty) {
                 Debug.Log("UpdateUI");
                 foreach (Transform child in PlayerListGO.transform) {

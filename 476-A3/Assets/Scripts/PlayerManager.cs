@@ -8,10 +8,10 @@ public class PlayerManager : MonoBehaviourPunCallbacks, IPunObservable
 {
     public static PlayerManager instance;
     public static List<PlayerManager> AllPlayers;
-    public static bool isDirty = false;
+    public static bool isDirty = false;             // Set to true if data for any player has been changed since the last lobby update
+
     public bool needsRespawn = false;
     float respawnCounter = 0f;
-
     const float RESPAWN_TIME = 5f;
 
     GameObject PlayerManagerListGO;
@@ -19,6 +19,7 @@ public class PlayerManager : MonoBehaviourPunCallbacks, IPunObservable
         get; protected set;
     }
 
+    // Is ready to begin the game in the lobby screen
     private bool _isReady;
     public bool isReady {
         get {
@@ -67,17 +68,15 @@ public class PlayerManager : MonoBehaviourPunCallbacks, IPunObservable
         base.OnDisable();
     }
 
-    void Start()
-    {
-    }
-
     void Update()
     {
+        // Set the tank's colour on spawn
         if (tank != null && isTankColourSet == false) {
             tank.SetColour(colour);
             isTankColourSet = true;
         }
 
+        // Spawn a new tank on a timer when destroyed
         if (photonView.IsMine && needsRespawn) {
             respawnCounter += Time.deltaTime;
             if (respawnCounter >= RESPAWN_TIME) {

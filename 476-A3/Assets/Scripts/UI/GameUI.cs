@@ -21,11 +21,13 @@ public class GameUI : MonoBehaviour
     }
 
     void Update() {
+        // Update all text fields with the current player status
         scoreText.text = "Score: " + MainController.instance.score;
         if (PlayerManager.instance != null) {
             reloadText.text = string.Format("Reload: {0:0.0}", PlayerManager.instance.tank.cooldown);
             chargeText.text = string.Format("Charge: {0:0.0}", PlayerManager.instance.tank.cannonCharge);
             if (PlayerManager.instance.tank != null) {
+                // Update all powerup statuses or clear the field if empty
                 if (PlayerManager.instance.tank.speedPowerupCountdown >= 0) {
                     speedText.gameObject.SetActive(true);
                     speedText.text = string.Format("2x Speed: {0:0.0}", PlayerManager.instance.tank.speedPowerupCountdown);

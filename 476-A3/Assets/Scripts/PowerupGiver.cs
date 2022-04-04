@@ -11,12 +11,12 @@ public class PowerupGiver : MonoBehaviour
     }
 
     void OnTriggerEnter(Collider collider) {
-        if (collider.gameObject.layer != 6) {
+        if (collider.gameObject.layer != 6) {   // Ignore all but player tanks
             return;
         }
 
+        // When a tank bumps a powerup, assign the powerup to that tank
         Tank tank = collider.GetComponentInParent<Tank>();
-
         tank.Powerup(type);
         
         gameObject.SetActive(false);

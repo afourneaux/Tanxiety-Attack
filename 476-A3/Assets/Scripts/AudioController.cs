@@ -16,6 +16,7 @@ public class AudioController : MonoBehaviour
         instance = this;
     }
 
+    // Special case of PlaySound automatically overwrites any existing music
     public string PlayMusic(int index) {
         if (musicID != null) {
             StopByID(musicID);
@@ -24,6 +25,7 @@ public class AudioController : MonoBehaviour
         return musicID;
     }
 
+    // Stop an audio source based on a given key
     public void StopByID(string soundID) {
         if (string.IsNullOrEmpty(soundID)) {
             return;
@@ -34,6 +36,7 @@ public class AudioController : MonoBehaviour
         }
     }
 
+    // Play the sound at the given index and return a key to stop it later
     public string PlaySound(int index, bool looping = false, float volume = 1f) {
         GameObject go = Instantiate(AudioPrefab, Vector3.zero, Quaternion.identity, transform);
         go.name = go.name + counter.ToString();
