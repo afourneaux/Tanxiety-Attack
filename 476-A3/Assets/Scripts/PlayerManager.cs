@@ -9,6 +9,10 @@ public class PlayerManager : MonoBehaviourPunCallbacks, IPunObservable
     public static PlayerManager instance;
     public static List<PlayerManager> AllPlayers;
     public static bool isDirty = false;
+    public bool needsRespawn = false;
+    float respawnCounter = 0f;
+
+    const float RESPAWN_TIME = 5f;
 
     GameObject PlayerManagerListGO;
     public Player player {
@@ -72,6 +76,15 @@ public class PlayerManager : MonoBehaviourPunCallbacks, IPunObservable
         if (tank != null && isTankColourSet == false) {
             tank.SetColour(colour);
             isTankColourSet = true;
+        }
+
+        if (photonView.IsMine && needsRespawn) {
+            respawnCounter += Time.deltaTime;
+            if (respawnCounter >= RESPAWN_TIME) {
+                MainController.instance.SpawnTank();
+                respawnCounter = 0f;
+                needsRespawn = false;
+            }
         }
     }
 

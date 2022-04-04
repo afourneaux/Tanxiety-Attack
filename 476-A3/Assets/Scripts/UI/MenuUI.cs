@@ -1,31 +1,33 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class MenuUI : MonoBehaviour
 {
-    TMPro.TMP_Text playerName;
-    TMPro.TMP_Text roomName;
+    TMPro.TMP_InputField playerName;
+    TMPro.TMP_InputField roomName;
     TMPro.TMP_Text errorOut;
     GameObject errorBG;
+    string musicID;
 
     void Start() {
-        playerName = transform.Find("NameInput/Text Input/Text Area/Text").GetComponent<TMPro.TMP_Text>();
-        roomName = transform.Find("RoomInput/Text Input/Text Area/Text").GetComponent<TMPro.TMP_Text>();
+        playerName = transform.Find("NameInput/Text Input").GetComponent<TMPro.TMP_InputField>();
+        roomName = transform.Find("RoomInput/Text Input").GetComponent<TMPro.TMP_InputField>();
         errorOut = transform.Find("ErrorOut").GetComponent<TMPro.TMP_Text>();
-        errorBG = transform.Find("ErrorOut/Background").gameObject;
+
+        musicID = AudioController.instance.PlayMusic(7);
     }
 
     public void HostGame() {
+        AudioController.instance.PlaySound(0);
         string room = roomName.text;
-        if (room == null || room == string.Empty) {
+        if (string.IsNullOrEmpty(room)) {
             ShowError("Room name is required!");
             return;
         }
 
         string player = playerName.text;
-        if (room == null || room == string.Empty) {
+        if (string.IsNullOrEmpty(player)) {
             ShowError("Player name is required!");
             return;
         }
@@ -37,14 +39,15 @@ public class MenuUI : MonoBehaviour
     }
 
     public void JoinGame() {
+        AudioController.instance.PlaySound(0);
         string room = roomName.text;
-        if (room == null || room == string.Empty) {
+        if (string.IsNullOrEmpty(room)) {
             ShowError("Room name is required!");
             return;
         }
 
         string player = playerName.text;
-        if (room == null || room == string.Empty) {
+        if (string.IsNullOrEmpty(player)) {
             ShowError("Player name is required!");
             return;
         }
@@ -57,6 +60,9 @@ public class MenuUI : MonoBehaviour
 
     void ShowError(string text) {
         errorOut.text = text;
-        errorBG.SetActive(true);
+    }
+
+    void OnDestroy() {
+        AudioController.instance.StopByID(musicID);
     }
 }

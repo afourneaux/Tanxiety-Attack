@@ -14,6 +14,8 @@ public class MainController : MonoBehaviour
     private float DIAG_COST = Mathf.Sqrt(2) * GRANULARITY;    // Cost of moving diagonally
     PlayerManager playerManager;
 
+    public int score = 0;
+
     private Node[][] nodesArray;
 
     void OnEnable() {
@@ -107,7 +109,7 @@ public class MainController : MonoBehaviour
         return new Vector3(twoD.x, y, twoD.y);
     }
 
-    public void StartGame() {
+    public void SpawnTank() {
 
         Node startPoint = null;
         // Terrible design, might fix later

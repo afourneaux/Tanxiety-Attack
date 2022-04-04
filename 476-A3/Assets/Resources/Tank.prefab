@@ -295,6 +295,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   CamoMaterial: {fileID: 2100000, guid: 03a0333ec530e5c48b79a98f2580e4af, type: 2}
   colour: {r: 0, g: 0, b: 0, a: 0}
+  cannonCharge: 0
+  cooldown: 0
+  reloadPowerupCountdown: 0
+  invincibilityPowerupCountdown: 0
+  speedPowerupCountdown: 0
+  playerManager: {fileID: 0}
 --- !u!54 &3164423426199690102
 Rigidbody:
   m_ObjectHideFlags: 0

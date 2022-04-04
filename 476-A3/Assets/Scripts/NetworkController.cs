@@ -10,7 +10,7 @@ public class NetworkController : MonoBehaviourPunCallbacks
 
     public override void OnEnable() {
         instance = this;
-        DontDestroyOnLoad(this.gameObject);
+        DontDestroyOnLoad(gameObject);
         base.OnEnable();
     }
 
@@ -24,12 +24,12 @@ public class NetworkController : MonoBehaviourPunCallbacks
         options.IsVisible = true;
         options.MaxPlayers = 4;
         PhotonNetwork.NickName = playerName;
-        bool success = PhotonNetwork.CreateRoom(roomName, options, TypedLobby.Default);
+        bool success = PhotonNetwork.JoinOrCreateRoom(roomName, options, TypedLobby.Default);
         if (success) {
             PhotonNetwork.LoadLevel("GameplayScene");
             return "";
         } else {
-            return "Room \"" + roomName + "\" could not be created";
+            return "Error creating room";
         }
     }
 
@@ -39,7 +39,7 @@ public class NetworkController : MonoBehaviourPunCallbacks
         if (success) {
             return "";
         } else {
-            return "Room \"" + roomName + "\" not found";
+            return "Error joining room";
         }
     }
 
@@ -121,6 +121,10 @@ public class NetworkController : MonoBehaviourPunCallbacks
         return PhotonNetwork.CurrentRoom.PlayerCount;
     }
 
+    public bool IsMaster() {
+        return PhotonNetwork.IsMasterClient;
+    }
+
     public void AssignTank(GameObject tank, PlayerManager player) {
         int tankID = tank.GetComponent<PhotonView>().ViewID;
         int playerID = player.GetComponent<PhotonView>().ViewID;
@@ -137,6 +141,10 @@ public class NetworkController : MonoBehaviourPunCallbacks
         photonView.RPC("RpcDestroyOtherPlayersObject", PhotonView.Find(viewID).Owner, viewID);
     }
 
+    public void RespawnTank(Player owner) {
+        photonView.RPC("RpcRespawnTank", owner);
+    }
+
     [PunRPC]
     public void RpcSetParent(int viewID, GameObject parent) {
         PhotonView child = PhotonNetwork.GetPhotonView(viewID);
@@ -150,6 +158,8 @@ public class NetworkController : MonoBehaviourPunCallbacks
         Tank tank = PhotonNetwork.GetPhotonView(tankID).GetComponent<Tank>();
         PlayerManager player = PhotonNetwork.GetPhotonView(playerID).GetComponent<PlayerManager>();
         player.tank = tank;
+        player.isTankColourSet = false;
+        tank.playerManager = player;
         Debug.Log("Tank " + tankID.ToString() + " set for player " + playerID.ToString());
     }
 
@@ -167,5 +177,10 @@ public class NetworkController : MonoBehaviourPunCallbacks
         if (pv.IsMine) {
             DestroyNetworkedObject(pv.gameObject);
         }
+    }
+
+    [PunRPC]
+    public void RpcRespawnTank() {
+        PlayerManager.instance.needsRespawn = true;
     }
 }

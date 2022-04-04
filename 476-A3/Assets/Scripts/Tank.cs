@@ -19,11 +19,21 @@ public class Tank : MonoBehaviourPunCallbacks, IPunObservable
     const float WEAPON_COOLDOWN = 5f;
     const float CHARGE_SPEED = 1f;
     const float MAX_CHARGE = 2f;
+    const float POWERUP_DURATION = 20.0f;
+    const float SOUND_DEADZONE = 0.2f;
+    const float SOUND_REDUCTION = 0.2f;
 
     float turretSwivel = 0f;
     float turretRise = TURRET_MAX_RISE;
-    float cannonCharge = 0f;
-    float cooldown = 0f;
+    public float cannonCharge = 0f;
+    public float cooldown = 0f;
+
+    public float reloadPowerupCountdown = 0f;
+    public float invincibilityPowerupCountdown = 0f;
+    public float speedPowerupCountdown = 0f;
+
+    string engineAudio;
+    string swivelAudio;
 
     GameObject body;
     GameObject turret;
@@ -35,6 +45,8 @@ public class Tank : MonoBehaviourPunCallbacks, IPunObservable
     GameObject wheelBR;
     GameObject wheelBL;
     Rigidbody rb;
+
+    public PlayerManager playerManager;
 
     void Awake()
     {
@@ -58,6 +70,16 @@ public class Tank : MonoBehaviourPunCallbacks, IPunObservable
 
     void Update()
     {
+        if (speedPowerupCountdown >= 0) {
+            speedPowerupCountdown -= Time.deltaTime;
+        }
+        if (reloadPowerupCountdown >= 0) {
+            reloadPowerupCountdown -= Time.deltaTime;
+        }
+        if (invincibilityPowerupCountdown >= 0) {
+            invincibilityPowerupCountdown -= Time.deltaTime;
+        }
+
         if (photonView.IsMine == false) {
             return;
         }
@@ -72,25 +94,64 @@ public class Tank : MonoBehaviourPunCallbacks, IPunObservable
                 cannonball.transform.LookAt(bulletTargetPoint.transform);
                 cannonball.GetComponent<Cannonball>().Fire(cannonCharge);
                 cannonCharge = 0f;
-                cooldown = WEAPON_COOLDOWN;
+
+                if (reloadPowerupCountdown <= 0f) {
+                    cooldown = WEAPON_COOLDOWN;
+                }
             }
         } else {
-            cooldown -= Time.deltaTime;
+            if (reloadPowerupCountdown > 0f) {
+                cooldown = 0f;
+            } else {
+                cooldown -= Time.deltaTime;
+            }
+
+            if (cooldown <= 0f) {
+                AudioController.instance.PlaySound(5);
+            }
         }
     }
 
     void FixedUpdate() {
-        if (photonView.IsMine == false) {
-            return;
-        }
         float horizontal = Input.GetAxis("Horizontal");
         float vertical = Input.GetAxis("Vertical");
         float rise = Input.GetAxis("TurretRise");
         float swivel = Input.GetAxis("TurretSwivel");
 
+        float soundModifier = photonView.IsMine ? 1f : SOUND_REDUCTION;
+
+        if (Mathf.Abs(vertical) >= SOUND_DEADZONE) {
+            if (engineAudio == null) {
+                engineAudio = AudioController.instance.PlaySound(1, true, soundModifier);
+            }
+        } else {
+            if (engineAudio != null) {
+                AudioController.instance.StopByID(engineAudio);
+                engineAudio = null;
+            }
+        }
+
+        if (Mathf.Abs(swivel) >= SOUND_DEADZONE) {
+            if (swivelAudio == null) {
+                swivelAudio = AudioController.instance.PlaySound(6, true, soundModifier);
+            }
+        } else {
+            if (swivelAudio != null) {
+                AudioController.instance.StopByID(swivelAudio);
+                swivelAudio = null;
+            }
+        }
+
+        if (photonView.IsMine == false) {
+            return;
+        }
+
         turretSwivel += swivel * TURRET_SWIVEL_SPEED * Time.fixedDeltaTime;
         turretRise += rise * TURRET_RISE_SPEED * Time.fixedDeltaTime;
         float forward = vertical * MOVE_SPEED * Time.fixedDeltaTime;
+        if (speedPowerupCountdown > 0f) {
+            forward *= 2;
+        }
         float rotate = horizontal * ROTATE_SPEED * Time.fixedDeltaTime;
         float wheelRotate = vertical * WHEEL_SPIN_SPEED * Time.fixedDeltaTime;
         float wheelRotateRotateModifier = horizontal * WHEEL_SPIN_SPEED / 2 * Time.fixedDeltaTime;
@@ -121,6 +182,35 @@ public class Tank : MonoBehaviourPunCallbacks, IPunObservable
     }
 
     public void OnHit() {
+        if (invincibilityPowerupCountdown > 0f) {
+            return;
+        }
+        NetworkController.instance.RespawnTank(photonView.Owner);
+        
         NetworkController.instance.DestroyOtherPlayersObject(photonView.ViewID);
     }
+
+    public void OnDestroy() {
+        AudioController.instance.StopByID(engineAudio);
+        AudioController.instance.StopByID(swivelAudio);
+    }
+
+    public void Powerup(POWERUP type) {
+        switch(type) {
+            case POWERUP.RELOAD:
+            reloadPowerupCountdown += POWERUP_DURATION;
+            break;
+            case POWERUP.SHIELD:
+            invincibilityPowerupCountdown += POWERUP_DURATION;
+            break;
+            case POWERUP.SPEED:
+            speedPowerupCountdown += POWERUP_DURATION;
+            break;
+            case POWERUP.XRAY:
+            if (photonView.IsMine) {
+                MainController.instance.score++;
+            }
+            break;
+        }
+    } 
 }

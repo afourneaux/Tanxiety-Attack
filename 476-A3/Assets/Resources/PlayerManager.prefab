@@ -67,5 +67,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bcb1f9b01eacd4648ab27765d587199f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  needsRespawn: 0
   isTankColourSet: 0
   tank: {fileID: 0}

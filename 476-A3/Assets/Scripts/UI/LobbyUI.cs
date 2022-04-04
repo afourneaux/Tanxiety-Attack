@@ -7,6 +7,7 @@ using UnityEngine.UI;
 
 public class LobbyUI : MonoBehaviour
 {
+    GameObject GameUI;
     GameObject PlayerListGO;
     GameObject PlayerManagerGO;
     GameObject ColourPreviewGO;
@@ -18,6 +19,7 @@ public class LobbyUI : MonoBehaviour
         PlayerManagerGO = transform.Find("/Players").gameObject;
         ColourPreviewGO = transform.Find("RightSide/ColourDisplay").gameObject;
         PlayerListGO = transform.Find("LeftSide/PlayerList").gameObject;
+        GameUI = transform.parent.Find("GameUI").gameObject;
         
         ColourPreviewGO.GetComponent<Image>().color = colour;
     }
@@ -45,7 +47,8 @@ public class LobbyUI : MonoBehaviour
                 PlayerManager.isDirty = false;
 
                 if (PlayerManager.AllPlayers.Count > 0 && startGame) {
-                    MainController.instance.StartGame();
+                    MainController.instance.SpawnTank();
+                    GameUI.SetActive(true);
                     Destroy(gameObject);
                 }
             }
@@ -59,6 +62,7 @@ public class LobbyUI : MonoBehaviour
     }
 
     public void Ready() {
+        AudioController.instance.PlaySound(0);
         PlayerManager.instance.isReady = true;
     }
 }
